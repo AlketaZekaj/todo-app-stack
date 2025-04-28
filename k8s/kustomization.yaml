@@ -13,8 +13,8 @@ resources:
 
 images:
   - name: todo-app
-    newName: gcr.io/todo-app-458207/todo-app
+    newName: us-central1-docker.pkg.dev/todo-app-458207/todo-app-repo/todo-app
     newTag: latest
   - name: todo-backend
-    newName: gcr.io/todo-app-458207/todo-backend
+    newName: us-central1-docker.pkg.dev/todo-app-458207/todo-app-repo/todo-backend
     newTag: latest
