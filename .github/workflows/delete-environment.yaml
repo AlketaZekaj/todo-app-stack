@@ -10,9 +10,7 @@ env:
   GKE_CLUSTER: todo-cluster
   GKE_LOCATION: us-central1-a
   REGION: us-central1
-  RRAW_REF: ${{ github.event.ref }}
-  CLEAN_BRANCH: ${{ github.event.ref != '' && github.event.ref.replace('refs/heads/', '') }}
-  NAMESPACE: ${{ github.event.ref != '' && (github.event.ref.replace('refs/heads/', '') == 'main' && 'todo-project' || format('todo-project-{0}', github.event.ref.replace('refs/heads/', ''))) }}
+  RAW_REF: ${{ github.event.ref }}
 
 jobs:
   delete-environment:
@@ -35,9 +33,22 @@ jobs:
           project_id: '${{ env.PROJECT_ID }}'
           location: '${{ env.GKE_LOCATION }}'
 
+      - name: Set Environment Variables
+        run: |
+          CLEAN_BRANCH="${RAW_REF#refs/heads/}"
+
+          if [[ "$CLEAN_BRANCH" == "main" ]]; then
+            NAMESPACE="todo-project"
+          else
+            NAMESPACE="todo-project-${CLEAN_BRANCH}"
+          fi
+
+          echo "CLEAN_BRANCH=$CLEAN_BRANCH" >> $GITHUB_ENV
+          echo "NAMESPACE=$NAMESPACE" >> $GITHUB_ENV
+
       - name: Delete Kubernetes Namespace
         run: |
-          echo \"Branch ref: $RAW_REF\"
-          echo \"Cleaned branch: $CLEAN_BRANCH\"
-          echo \"Namespace to delete: $NAMESPACE\"
-          kubectl delete namespace $NAMESPACE --ignore-not-found=true
+          echo "Branch ref: $RAW_REF"
+          echo "Cleaned branch: $CLEAN_BRANCH"
+          echo "Namespace to delete: $NAMESPACE"
+          kubectl delete namespace "$NAMESPACE" --ignore-not-found=true
