@@ -58,19 +58,20 @@ jobs:
       - name: Push Backend Docker Image
         run: docker push us-central1-docker.pkg.dev/$PROJECT_ID/todo-app-repo/todo-backend:$BRANCH-$GITHUB_SHA
 
-      # Set up Kustomize
       - name: Set up Kustomize
         uses: imranismail/setup-kustomize@v2.1.0
 
       # Deploy to GKE
       - name: Deploy to GKE
         run: |
+          cd k8s
+
           kustomize edit set image todo-app=us-central1-docker.pkg.dev/$PROJECT_ID/todo-app-repo/todo-app:$BRANCH-$GITHUB_SHA
           kustomize edit set image todo-backend=us-central1-docker.pkg.dev/$PROJECT_ID/todo-app-repo/todo-backend:$BRANCH-$GITHUB_SHA
-          
-          kustomize build ./k8s | kubectl apply -f -
-          
+
+          kustomize build . | kubectl apply -f -
+
           kubectl rollout status deployment/todo-app -n todo-project
           kubectl rollout status deployment/todo-backend -n todo-project
-          
+
           kubectl get services -n todo-project -o wide
