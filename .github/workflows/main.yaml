@@ -8,13 +8,8 @@ on:
 env:
   PROJECT_ID: ${{ secrets.GKE_PROJECT }}
   GKE_CLUSTER: todo-cluster
-  GKE_ZONE: us-central1
+  GKE_ZONE: us-central1-a
   BRANCH: ${{ github.ref_name }}
-  REGION: us-central1
-  FRONT_IMAGE: todo-app
-  BACK_IMAGE: todo-backend
-  FRONT_REPO: todo-app-repo
-  BACK_REPO: todo-backend-repo
 
 jobs:
   build-publish-deploy:
@@ -36,8 +31,9 @@ jobs:
       - name: Use gcloud CLI
         run: gcloud info
 
-      - name: Configure Docker to use Google Artifact Registry
-        run: gcloud --quiet auth configure-docker ${REGION}-docker.pkg.dev
+      - name: Authenticate Docker to Artifact Registry
+        run: |
+          gcloud auth configure-docker us-central1-docker.pkg.dev
 
       - name: Get GKE Credentials
         uses: google-github-actions/get-gke-credentials@v2
@@ -46,41 +42,36 @@ jobs:
           project_id: '${{ env.PROJECT_ID }}'
           location: '${{ env.GKE_ZONE }}'
 
+      # Build Frontend (todo-app)
       - name: Build Frontend Docker Image (todo-app)
-        run: docker build -t ${REGION}-docker.pkg.dev/$PROJECT_ID/$FRONT_REPO/$FRONT_IMAGE:$BRANCH-$GITHUB_SHA ./todo-app
+        run: docker build -t us-central1-docker.pkg.dev/$PROJECT_ID/todo-app-repo/todo-app:$BRANCH-$GITHUB_SHA ./todo-app
 
+      # Build Backend (todo-backend)
       - name: Build Backend Docker Image (todo-backend)
-        run: docker build -t ${REGION}-docker.pkg.dev/$PROJECT_ID/$BACK_REPO/$BACK_IMAGE:$BRANCH-$GITHUB_SHA ./todo-backend
+        run: docker build -t us-central1-docker.pkg.dev/$PROJECT_ID/todo-app-repo/todo-backend:$BRANCH-$GITHUB_SHA ./todo-backend
 
+      # Push Frontend
       - name: Push Frontend Docker Image
-        run: docker push ${REGION}-docker.pkg.dev/$PROJECT_ID/$FRONT_REPO/$FRONT_IMAGE:$BRANCH-$GITHUB_SHA
+        run: docker push us-central1-docker.pkg.dev/$PROJECT_ID/todo-app-repo/todo-app:$BRANCH-$GITHUB_SHA
 
+      # Push Backend
       - name: Push Backend Docker Image
-        run: docker push ${REGION}-docker.pkg.dev/$PROJECT_ID/$BACK_REPO/$BACK_IMAGE:$BRANCH-$GITHUB_SHA
+        run: docker push us-central1-docker.pkg.dev/$PROJECT_ID/todo-app-repo/todo-backend:$BRANCH-$GITHUB_SHA
 
       - name: Set up Kustomize
         uses: imranismail/setup-kustomize@v2.1.0
 
+      # Deploy to GKE
       - name: Deploy to GKE
         run: |
           cd k8s
-          kustomize edit set image todo-app=${REGION}-docker.pkg.dev/$PROJECT_ID/$FRONT_REPO/$FRONT_IMAGE:$BRANCH-$GITHUB_SHA
-          kustomize edit set image todo-backend=${REGION}-docker.pkg.dev/$PROJECT_ID/$BACK_REPO/$BACK_IMAGE:$BRANCH-$GITHUB_SHA
+
+          kustomize edit set image todo-app=us-central1-docker.pkg.dev/$PROJECT_ID/todo-app-repo/todo-app:$BRANCH-$GITHUB_SHA
+          kustomize edit set image todo-backend=us-central1-docker.pkg.dev/$PROJECT_ID/todo-app-repo/todo-backend:$BRANCH-$GITHUB_SHA
+
           kustomize build . | kubectl apply -f -
-          
-          echo "Waiting for frontend deployment rollout..."
-          for i in {1..10}; do
-            kubectl rollout status deployment/todo-app -n todo-project && break
-            echo "Retrying frontend rollout in 5s..."
-            sleep 5
-          done
 
-          echo "Waiting for backend deployment rollout..."
-          for i in {1..10}; do
-            kubectl rollout status deployment/todo-backend -n todo-project && break
-            echo "Retrying backend rollout in 5s..."
-            sleep 5
-          done
+          kubectl rollout status deployment/todo-app -n todo-project
+          kubectl rollout status deployment/todo-backend -n todo-project
 
-          kubectl get pods -n todo-project
-          kubectl get services -n todo-project
+          kubectl get services -n todo-project -o wide
