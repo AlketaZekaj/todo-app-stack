@@ -1,0 +1,18 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: random-todo-cronjob
+  namespace: todo-project
+spec:
+  schedule: "0 * * * *"  
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: random-todo
+              image: alketaz/random-todo-job:latest
+              env:
+                - name: BACKEND_URL
+                  value: http://todo-backend-service:5000
+          restartPolicy: OnFailure
