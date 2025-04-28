@@ -5,7 +5,7 @@ metadata:
   namespace: todo-project
 spec:
   strategy:
-    type:Recreate
+    type: Recreate
   replicas: 1
   selector:
     matchLabels:
