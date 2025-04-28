@@ -8,8 +8,8 @@ on:
 env:
   PROJECT_ID: ${{ secrets.GKE_PROJECT }}
   GKE_CLUSTER: todo-cluster
-  GKE_LOCATION: us-central1         
-  REGION: us-central1
+  GKE_LOCATION: us-central1-a         
+  REGION: us-central1-a
   BRANCH: ${{ github.ref_name }}
   FRONT_IMAGE: todo-app
   BACK_IMAGE: todo-backend
