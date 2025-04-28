@@ -37,4 +37,15 @@ Finally i pushed the chanes to github and we can see that the workflow is create
 ### Exercise3.04
 
 
-For this exercise I started with 
+For this exercise I modified the main.yaml file:
+
+And then tested it 
+
+
+In this exercise, I improved the CI/CD deployment pipeline to support branch-based environments.
+The main branch deploys into todo-project namespace.
+Any other branch creates and deploys into todo-project-branch-name namespace automatically.
+Testing was completed by:
+Creating a new branch feature-test.
+Pushing a small change to trigger the workflow.
+Confirming that a new namespace and deployments were created automatically.
