@@ -18,3 +18,4 @@ images:
   - name: todo-backend
     newName: us-central1-docker.pkg.dev/todo-app-458207/todo-app-repo/todo-backend
     newTag: latest
+

@@ -31,8 +31,9 @@ jobs:
       - name: Use gcloud CLI
         run: gcloud info
 
-      - name: Configure Docker to use Google Artifact Registry
-        run: gcloud --quiet auth configure-docker
+      - name: Authenticate Docker to Artifact Registry
+        run: |
+          gcloud auth configure-docker us-central1-docker.pkg.dev
 
       - name: Get GKE Credentials
         uses: google-github-actions/get-gke-credentials@v2
@@ -41,11 +42,11 @@ jobs:
           project_id: '${{ env.PROJECT_ID }}'
           location: '${{ env.GKE_ZONE }}'
 
-      # Build Frontend
+      # Build Frontend (todo-app)
       - name: Build Frontend Docker Image (todo-app)
         run: docker build -t us-central1-docker.pkg.dev/$PROJECT_ID/todo-app-repo/todo-app:$BRANCH-$GITHUB_SHA ./todo-app
 
-      # Build Backend
+      # Build Backend (todo-backend)
       - name: Build Backend Docker Image (todo-backend)
         run: docker build -t us-central1-docker.pkg.dev/$PROJECT_ID/todo-app-repo/todo-backend:$BRANCH-$GITHUB_SHA ./todo-backend
 
@@ -66,10 +67,10 @@ jobs:
         run: |
           kustomize edit set image todo-app=us-central1-docker.pkg.dev/$PROJECT_ID/todo-app-repo/todo-app:$BRANCH-$GITHUB_SHA
           kustomize edit set image todo-backend=us-central1-docker.pkg.dev/$PROJECT_ID/todo-app-repo/todo-backend:$BRANCH-$GITHUB_SHA
-
+          
           kustomize build ./k8s | kubectl apply -f -
-
+          
           kubectl rollout status deployment/todo-app -n todo-project
           kubectl rollout status deployment/todo-backend -n todo-project
-
+          
           kubectl get services -n todo-project -o wide
