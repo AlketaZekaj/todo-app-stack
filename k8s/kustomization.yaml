@@ -15,3 +15,6 @@ images:
   - name: todo-app
     newName: gcr.io/todo-app-458207/todo-app
     newTag: latest
+  - name: todo-backend
+    newName: gcr.io/todo-app-458207/todo-backend
+    newTag: latest
