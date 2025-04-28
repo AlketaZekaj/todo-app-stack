@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: todo-backend-deployment
+  name: todo-backend
   namespace: todo-project
 spec:
   replicas: 1
