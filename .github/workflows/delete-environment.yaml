@@ -1,0 +1,43 @@
+name: Delete Environment on Branch Deletion
+
+on:
+  delete:
+    branches:
+      - '**'
+
+env:
+  PROJECT_ID: ${{ secrets.GKE_PROJECT }}
+  GKE_CLUSTER: todo-cluster
+  GKE_LOCATION: us-central1-a
+  REGION: us-central1
+  RAW_REF: ${{ github.event.ref }}
+  CLEAN_BRANCH: ${{ github.event.ref | replace('refs/heads/', '') }}
+  NAMESPACE: ${{ github.event.ref == 'refs/heads/main' && 'todo-project' || format('todo-project-{0}', github.event.ref | replace('refs/heads/', '')) }}
+
+jobs:
+  delete-environment:
+    name: Delete Kubernetes Environment
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.GKE_SA_KEY }}'
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Get GKE Credentials
+        uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: '${{ env.GKE_CLUSTER }}'
+          project_id: '${{ env.PROJECT_ID }}'
+          location: '${{ env.GKE_LOCATION }}'
+
+      - name: Delete Kubernetes Namespace
+        run: |
+          echo \"Branch ref: $RAW_REF\"
+          echo \"Cleaned branch: $CLEAN_BRANCH\"
+          echo \"Namespace to delete: $NAMESPACE\"
+          kubectl delete namespace $NAMESPACE --ignore-not-found=true
