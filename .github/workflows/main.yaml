@@ -3,14 +3,14 @@ name: Release TODO App - Branch Based
 on:
   push:
     branches:
-      - '**'    # Listen to all branches
+      - '**'
 
 env:
   PROJECT_ID: ${{ secrets.GKE_PROJECT }}
   GKE_CLUSTER: todo-cluster
-  GKE_ZONE: us-central1
-  BRANCH: ${{ github.ref_name }}
+  GKE_LOCATION: us-central1         
   REGION: us-central1
+  BRANCH: ${{ github.ref_name }}
   FRONT_IMAGE: todo-app
   BACK_IMAGE: todo-backend
   FRONT_REPO: todo-app-repo
@@ -45,7 +45,7 @@ jobs:
         with:
           cluster_name: '${{ env.GKE_CLUSTER }}'
           project_id: '${{ env.PROJECT_ID }}'
-          location: '${{ env.GKE_ZONE }}'
+          location: '${{ env.GKE_LOCATION }}'
 
       - name: Build Frontend Docker Image (todo-app)
         run: docker build -t ${REGION}-docker.pkg.dev/$PROJECT_ID/$FRONT_REPO/$FRONT_IMAGE:$BRANCH-$GITHUB_SHA ./todo-app
@@ -66,16 +66,17 @@ jobs:
         run: |
           cd k8s
 
-          # Update images dynamically
+          # Set correct image tags
           kustomize edit set image todo-app=${REGION}-docker.pkg.dev/$PROJECT_ID/$FRONT_REPO/$FRONT_IMAGE:$BRANCH-$GITHUB_SHA
           kustomize edit set image todo-backend=${REGION}-docker.pkg.dev/$PROJECT_ID/$BACK_REPO/$BACK_IMAGE:$BRANCH-$GITHUB_SHA
 
-          # Create namespace if it doesn't exist
+          # Create namespace if it does not exist
           kubectl create namespace $NAMESPACE --dry-run=client -o yaml | kubectl apply -f -
 
-          # Apply Kubernetes resources into the correct namespace
+          # Deploy app
           kustomize build . | kubectl apply -n $NAMESPACE -f -
 
+          # Rollout frontend
           echo "Waiting for frontend deployment rollout..."
           for i in {1..10}; do
             kubectl rollout status deployment/todo-app -n $NAMESPACE && break
@@ -83,6 +84,7 @@ jobs:
             sleep 5
           done
 
+          # Rollout backend
           echo "Waiting for backend deployment rollout..."
           for i in {1..10}; do
             kubectl rollout status deployment/todo-backend -n $NAMESPACE && break
