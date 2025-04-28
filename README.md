@@ -35,3 +35,6 @@ Finally i pushed the chanes to github and we can see that the workflow is create
 ![alt text](images/image-5.png)
 
 ### Exercise3.04
+
+
+For this exercise I started with 
