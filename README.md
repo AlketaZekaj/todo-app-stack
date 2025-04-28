@@ -37,11 +37,6 @@ Finally i pushed the chanes to github and we can see that the workflow is create
 ### Exercise3.04
 
 
-For this exercise I modified the main.yaml file:
-
-And then tested it 
-
-
 In this exercise, I improved the CI/CD deployment pipeline to support branch-based environments.
 The main branch deploys into todo-project namespace.
 Any other branch creates and deploys into todo-project-branch-name namespace automatically.
@@ -49,3 +44,37 @@ Testing was completed by:
 Creating a new branch feature-test.
 Pushing a small change to trigger the workflow.
 Confirming that a new namespace and deployments were created automatically.
+
+![alt text](image-1.png)
+
+![alt text](image.png)
+
+![alt text](image-2.png)
+
+![alt text](image-3.png)
+
+### EXERCISE 3.05:
+
+In this exercise, I created a new GitHub Actions workflow that automatically deletes the Kubernetes namespace when a branch is deleted.
+This ensures that old or unused environments do not stay active, helping to manage cluster resources more efficiently.
+
+Implementation Steps:
+I created a new workflow file:
+.github/workflows/delete-environment.yaml
+The workflow triggers on the delete event for branches.
+It authenticates to Google Cloud using a Service Account key.
+It retrieves the GKE cluster credentials.
+It calculates the namespace name based on the branch name:
+If the branch was main, it would use the namespace todo-project.
+Otherwise, it formats it like todo-project-branch-name.
+It then runs a command to delete the corresponding namespace in Kubernetes:
+
+![alt text](image-5.png)
+
+![alt text](image-4.png)
+![alt text](image-6.png)
+
+### Exercise 3.08:
+
+
+
